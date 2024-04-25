@@ -1,39 +1,46 @@
 <?php
 session_start();
-//error_reporting(0);
+error_reporting(0);
 include('includes/config.php');
 if(strlen($_SESSION['alogin'])==0)
 	{	
 header('location:index.php');
 }
 else{
-if(isset($_POST['update']))
+// Code for change password	
+if(isset($_POST['submit']))
+	{
+$password=md5($_POST['password']);
+$newpassword=md5($_POST['newpassword']);
+$username=$_SESSION['alogin'];
+	$sql ="SELECT Password FROM admin WHERE UserName=:username and Password=:password";
+$query= $dbh -> prepare($sql);
+$query-> bindParam(':username', $username, PDO::PARAM_STR);
+$query-> bindParam(':password', $password, PDO::PARAM_STR);
+$query-> execute();
+$results = $query -> fetchAll(PDO::FETCH_OBJ);
+if($query -> rowCount() > 0)
 {
-$wpaddress=$_POST['address'];	
-$wpcnumber=$_POST['contactno'];
-$ophrs=$_POST['openinghrs'];
-$email=$_POST['emailid'];
-
-$sql="update tblpages set detail=:wpaddress,openignHrs=:ophrs,phoneNumber=:wpcnumber,emailId=:email where type='contact'";
-$query = $dbh->prepare($sql);
-$query->bindParam(':ophrs',$ophrs,PDO::PARAM_STR);
-$query->bindParam(':wpaddress',$wpaddress,PDO::PARAM_STR);
-$query->bindParam(':wpcnumber',$wpcnumber,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
-$query->execute();
-
- echo "<script>alert('Details updates successfully');</script>";
- echo "<script>window.location.href ='contact.php'</script>";
-
+$con="update admin set Password=:newpassword where UserName=:username";
+$chngpwd1 = $dbh->prepare($con);
+$chngpwd1-> bindParam(':username', $username, PDO::PARAM_STR);
+$chngpwd1-> bindParam(':newpassword', $newpassword, PDO::PARAM_STR);
+$chngpwd1->execute();
+$msg="Your Password succesfully changed";
 }
+else {
+$error="Your current password is wrong";	
+}
+}
+?>
 
-	?>
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>CWMS | Contact Us info</title>
+<title>CWMS | Admin Change Password</title>
 
 <script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+
 <link href="css/bootstrap.min.css" rel='stylesheet' type='text/css' />
 <link href="css/style.css" rel='stylesheet' type='text/css' />
 <link rel="stylesheet" href="css/morris.css" type="text/css"/>
@@ -42,6 +49,18 @@ $query->execute();
 <link href='//fonts.googleapis.com/css?family=Roboto:700,500,300,100italic,100,400' rel='stylesheet' type='text/css'/>
 <link href='//fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="css/icon-font.min.css" type='text/css' />
+<script type="text/javascript">
+function valid()
+{
+if(document.chngpwd.newpassword.value!= document.chngpwd.confirmpassword.value)
+{
+alert("New Password and Confirm Password Field do not match  !!");
+document.chngpwd.confirmpassword.focus();
+return false;
+}
+return true;
+}
+</script>
   <style>
 		.errorWrap {
     padding: 10px;
@@ -74,81 +93,66 @@ $query->execute();
 				</div>
 <!--heder end here-->
 	<ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="dashboard.php">Home</a><i class="fa fa-angle-right"></i>Contact us information</li>
+                <li class="breadcrumb-item"><a href="dashboard.php">Home</a><i class="fa fa-angle-right"></i>Change Password</li>
             </ol>
 		<!--grid-->
  	<div class="grid-form">
- 
-<!---->
+
   <div class="grid-form1">
-  	       <h3>Update Contact Information</h3>
-<?php 
-$sql = "SELECT * from tblpages where type='contact'";
-$query = $dbh -> prepare($sql);
-$query->execute();
-$results=$query->fetchAll(PDO::FETCH_OBJ);
-foreach($results as $result)
-{       
-?>
-  	         <div class="tab-content">
-						<div class="tab-pane active" id="horizontal-form">
-							<form class="form-horizontal" name="washingpoint" method="post" enctype="multipart/form-data">
 
-<div class="form-group">
-									<label for="focusedinput" class="col-sm-2 control-label">Adress</label>
-									<div class="col-sm-8">
-										<textarea class="form-control" name="address" id="address" placeholder="Address" required rows="4"><?php   echo $result->detail; ?></textarea>
-									</div>
+  	        	  <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 
+				else if($msg){?><div class="succWrap"><strong>SUCCESS</strong>:<?php echo htmlentities($msg); ?> </div><?php }?>
+				
+  <div class="panel-body">
+					<form  name="chngpwd" method="post" class="form-horizontal" onSubmit="return valid();">
+
+						<div class="form-group">
+							<label class="col-md-2 control-label">Current Password</label>
+							<div class="col-md-8">
+								<div class="input-group">
+									<span class="input-group-addon">
+										<i class="fa fa-key"></i>
+									</span>
+									<input type="password" name="password" class="form-control1" id="exampleInputPassword1" placeholder="Current Password" required="">
 								</div>
+							</div>
+						</div>
 
-								<div class="form-group">
-									<label for="focusedinput" class="col-sm-2 control-label">Opening Hours</label>
-									<div class="col-sm-8">
-										<input type="text" class="form-control" name="openinghrs" id="openinghrs" placeholder="Opening Hour" value="<?php   echo $result->openignHrs; ?>" required>
-									</div>
+	<div class="form-group">
+							<label class="col-md-2 control-label">New Password</label>
+							<div class="col-md-8">
+								<div class="input-group">
+									<span class="input-group-addon">
+										<i class="fa fa-key"></i>
+									</span>
+									<input type="password" class="form-control1" name="newpassword" id="newpassword" placeholder="New Password" required="">
 								</div>
-<div class="form-group">
-									<label for="focusedinput" class="col-sm-2 control-label">Email Id</label>
-									<div class="col-sm-8">
-										<input type="email" class="form-control" name="emailid" id="emailid" placeholder="Email Id" required value="<?php   echo $result->emailId; ?>">
-									</div>
+							</div>
+						</div>
+
+	<div class="form-group">
+							<label class="col-md-2 control-label">Confirm Password</label>
+							<div class="col-md-8">
+								<div class="input-group">
+									<span class="input-group-addon">
+										<i class="fa fa-key"></i>
+									</span>
+									<input type="password" class="form-control1" name="confirmpassword" id="confirmpassword" placeholder="Confrim Password" required="">
 								</div>
+							</div>
+						</div>
 
-
-<div class="form-group">
-									<label for="focusedinput" class="col-sm-2 control-label">Contact Number</label>
-									<div class="col-sm-8">
-										<input type="text" class="form-control" name="contactno" id="contactno" placeholder="Contact Number" required value="<?php   echo $result->phoneNumber; ?>">
-									</div>
-								</div>
-
-
-
-	
-
-
-														
-	
-
-								<div class="row">
-			<div class="col-sm-8 col-sm-offset-2">
-				<button type="submit" name="update" class="btn-primary btn">Update</button>
+						<div class="col-sm-8 col-sm-offset-2">
+				<button type="submit" name="submit" class="btn-primary btn">Submit</button>
+				<button type="reset" class="btn-inverse btn">Reset</button>
 			</div>
 		</div>
-							
-					</div>
+			
 					</form>
-
-     <?php }  ?>
-      
-
-      
-      <div class="panel-footer">
-		
-	 </div>
-    </form>
-  </div>
- 	</div>
+	</div>
+</div>
+</div>
+</div>
  	<!--//grid-->
 
 <!-- script-for sticky-nav -->
@@ -179,7 +183,7 @@ foreach($results as $result)
 </div>
   <!--//content-inner-->
 		<!--/sidebar-menu-->
-					<?php include('includes/sidebarmenu.php');?>
+				<?php include('includes/sidebarmenu.php');?>
 							  <div class="clearfix"></div>		
 							</div>
 							<script>
@@ -202,13 +206,10 @@ foreach($results as $result)
 											toggle = !toggle;
 										});
 							</script>
-<!--js -->
 <script src="js/jquery.nicescroll.js"></script>
 <script src="js/scripts.js"></script>
-<!-- Bootstrap Core JavaScript -->
-   <script src="js/bootstrap.min.js"></script>
-   <!-- /Bootstrap Core JavaScript -->	   
-
+<script src="js/bootstrap.min.js"></script>
+   
 </body>
 </html>
 <?php } ?>
